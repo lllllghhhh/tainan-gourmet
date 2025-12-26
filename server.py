@@ -2,12 +2,13 @@ import os
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 UPSTREAM = os.environ.get("UPSTREAM", "https://api-gateway.netdb.csie.ncku.edu.tw").rstrip("/")
 API_KEY = os.environ.get("OLLAMA_API_KEY", "").strip()
 
 HOST = os.environ.get("HOST", "127.0.0.1")
-PORT = int(os.environ.get("PORT", "11435"))
+PORT = int(os.environ.get("PORT", "8080"))
 
 app = FastAPI()
 
@@ -28,7 +29,7 @@ HOP_HEADERS = {
 def clean_headers(headers: dict) -> dict:
     return {k: v for k, v in headers.items() if k.lower() not in HOP_HEADERS}
 
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+@app.api_route("/proxy/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 async def proxy(path: str, request: Request):
     if not API_KEY:
         return Response(content="Missing OLLAMA_API_KEY", status_code=500)
@@ -56,6 +57,8 @@ async def proxy(path: str, request: Request):
         headers=resp_headers,
         media_type=resp_headers.get("content-type"),
     )
+
+app.mount("/", StaticFiles(directory="web", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn

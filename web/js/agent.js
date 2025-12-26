@@ -1,5 +1,5 @@
 ﻿// js/agent.js (整份取代原檔)
-const AGENT_BASE = "http://127.0.0.1:11435";
+const AGENT_BASE = "/proxy";
 const DEFAULT_MODEL = "gpt-oss:20b";
 
 /**
