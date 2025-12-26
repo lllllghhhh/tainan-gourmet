@@ -1,0 +1,335 @@
+/* =========================================
+   台南復古配色
+========================================= */
+:root {
+  --header-height: auto;
+
+  --main-red: #b4452a;        /* 赤赭紅 */
+  --light-red: #c85c38;       /* 台南磚紅 */
+  --paper-bg: #faf6ef;        /* 淡奶茶復古底 */
+  --soft-yellow: #f2e6c4;     /* 淺復古黃 */
+  --dark-coffee: #8c6f5a;     /* 咖啡線條 */
+  --text-dark: #453728;       /* 深咖啡字色 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper-bg);
+  font-family: "Noto Sans TC", Arial, sans-serif;
+  color: var(--text-dark);
+  line-height: 1.75;
+}
+
+/* =========================================
+   Header（復古台南感）
+========================================= */
+
+/* Logo 圖片大小控制 */
+.logo-img {
+  height: 50px;        /* 建議 50–70px，可依需求調整 */
+  width: auto;
+  object-fit: cover;
+  display: block;
+
+}
+.site-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  min-height: 80px ;
+  background: var(--soft-yellow);
+  border-bottom: 2px solid var(--dark-coffee);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+  z-index: 999;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 20px;
+  gap: 12px;
+}
+
+.brand {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--main-red);
+  letter-spacing: 2px;
+}
+
+/* =========================================
+   NAV（平均分散 + 復古按鈕）
+========================================= */
+
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.main-nav a,
+.dropbtn {
+  flex: 1;
+  padding: 8px 12px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text-dark);
+  background: var(--paper-bg);
+  border: 1px solid var(--dark-coffee);
+  border-radius: 8px;
+  font-weight: 600;
+  transition: 0.15s ease-in-out;
+}
+
+.main-nav a:hover,
+.dropbtn:hover {
+  background: var(--light-red);
+  color: #fff;
+  border-color: var(--main-red);
+}
+
+.main-nav a.active {
+  background: var(--main-red);
+  color: white;
+}
+
+/* 下拉選單 */
+.dropdown {
+  position: relative;
+  flex: 1;
+}
+
+/* 讓「種類介紹」按鈕跟其他 nav 一樣寬 */
+.dropbtn {
+  width: 100%;
+  display: block;  
+  padding: 8px 12px; 
+  line-height: 1.75;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 40px;
+  left: 0;
+  background: var(--paper-bg);
+  border: 1px solid var(--dark-coffee);
+  border-radius: 8px;
+  width: 100%;
+  z-index: 1000;
+}
+
+.dropdown-content a {
+  padding: 10px;
+  display: block;
+  color: var(--text-dark);
+  text-decoration: none;
+  border-bottom: 1px solid #e5d8c6;
+}
+
+.dropdown-content a:hover {
+  background: var(--light-red);
+  color: white;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.header-spacer {
+  height: 30px; /* 增加緩衝，避免被固定標題遮擋 */
+}
+
+
+/* =========================================
+   內容區
+========================================= */
+
+.content {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* =========================================
+   店家詳細介紹頁
+========================================= */
+
+.detail-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.detail-left,
+.detail-right {
+  flex: 1;
+}
+
+/* 左側店家按鈕 */
+.store-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--soft-yellow);
+  border: 1px solid var(--dark-coffee);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: left;
+  transition: 0.15s;
+}
+
+.store-btn:hover {
+  background: var(--light-red);
+  color: white;
+}
+
+.store-btn.active {
+  background: var(--main-red);
+  color: white;
+  border-color: var(--dark-coffee);
+}
+
+/* 表格呈現店家資訊 */
+.store-table {
+  width: 100%;
+  margin: 14px 0;
+  border-collapse: collapse;
+  background: #fffdf6;
+  border: 1px solid var(--dark-coffee);
+}
+
+.store-table th {
+  width: 110px;
+  padding: 10px;
+  background: var(--soft-yellow);
+  border: 1px solid var(--dark-coffee);
+  text-align: left;
+}
+
+.store-table td {
+  padding: 10px;
+  border: 1px solid var(--dark-coffee);
+}
+
+.store-intro {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* 地圖外框 */
+.map-wrapper {
+  border: 2px solid var(--dark-coffee);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* =========================================
+   Slider（你的幻燈片）
+========================================= */
+
+.slider {
+  --visible: 1;
+  --gap: 14px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (min-width: 700px) {
+  .slider { --visible: 2; }
+}
+@media (min-width: 1024px) {
+  .slider { --visible: 3; }
+}
+
+.slider-viewport {
+  overflow: hidden;
+}
+
+.slider-track {
+  display: flex;
+  gap: var(--gap);
+  transform: translateX(0);
+  transition: transform .4s ease;
+}
+
+.slide {
+  flex: 0 0 calc((100% - (var(--gap) * (var(--visible) - 1))) / var(--visible));
+  border-radius: 14px;
+  border: 1px solid #eee;
+  overflow: hidden;
+  background: #fff;
+}
+
+.slide img {
+  width: 100%;
+  height: 170px;
+  display: block;
+  object-fit: cover;
+}
+
+.slider-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.slider-btn:disabled {
+  opacity: .35;
+}
+
+/* =========================================
+   懸浮回首頁按鈕
+========================================= */
+
+.floating_home_btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+
+    width: 60px;
+    height: 60px;
+    background-color: #e74c3c;
+    color: white;
+
+    border-radius: 50%;
+    text-decoration: none;
+    text-align: center;
+    line-height: 60px;
+    font-size: 12px;
+
+    z-index: 999;
+    transition: 0.2s;
+}
+
+.floating_home_btn:hover {
+    transform: scale(1.1) rotate(-10deg);
+    background-color: gold;
+    box-shadow: 0 0 15px gold;
+}
+
+/* =========================================
+   手機 RWD
+========================================= */
+
+@media (max-width: 768px) {
+  .detail-layout {
+    flex-direction: column;
+  }
+  .main-nav {
+    flex-direction: column;
+  }
+}

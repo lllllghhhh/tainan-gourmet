@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />    
+  <title>等等要吃啥 | IIM好食在</title>
+
+  <script src="js/index.js" defer></script>
+  <script src="js/foodData.js"></script>
+  <script src="js/spin.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+
+  <style>
+    @import url('css/style.css');
+    /* --- 拉霸機樣式 --- */
+    .slot-machine-container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .slot-window {
+        width: 300px;
+        height: 100px;
+        background-color: white;
+        color: #333;
+        margin: 20px auto;
+        border-radius: 10px;
+        border: 2px solid #f1c40f; /* 金色邊框 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+
+    }
+
+    .action-btn {
+        padding: 15px 40px;
+        font-size: 1.5rem;
+        background-color: chocolate; /* 紅色按鈕 */
+        color: white;   
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;    /* 手型游標 */
+        box-shadow: 0 5px 0 #4d2301;
+        transition: transform 0.1s;
+        margin-bottom: 20px;
+    }
+
+    .action-btn:active {
+        transform: translateY(4px);
+        box-shadow: 0 1px 0 #c0392b;
+    }
+
+    .list-settings {
+        max-width: 400px;
+        margin: 0 auto;
+        text-align: left;
+    }
+
+    /* Fixed centered page title (置中且固定於視窗) */
+    .fixed-title {
+      left: 50%;
+      transform: translateX(-50%);
+      top: calc(var(--header-height) + 10px); /* 與 header 保持間距 */
+      z-index: 20;
+      margin: 0;
+      background: transparent;
+      padding: 0.2rem 0.6rem;
+    }
+
+    .spin-page {
+      padding-top: 70px; /* 讓內容避開固定標題 */
+    }
+
+    .list-settings h4 {
+      margin-bottom: 8px;
+    }
+
+    .add-form {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .add-form input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .add-form button {
+      padding: 10px 16px;
+      background: #b4452a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .add-form button:hover {
+      background: #c85c38;
+    }
+
+    .options-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+
+    .options-table th,
+    .options-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      background: #fff;
+    }
+
+    .options-table th {
+      background: #f2e6c4;
+    }
+
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img src="image/IIM_logo.png" alt="IIM好食在 Logo" class="logo-img">
+      </div>
+
+      <nav class="main-nav" aria-label="主選單">
+        <a href="index.html">首頁</a>
+        <div class="dropdown">
+          <button class="dropbtn">食物種類 ▼</button>
+          <div class="dropdown-content">
+            <a href="tainan.html">台南特色美食</a>
+            <a href="ramen.html">拉麵</a>
+            <a href="japaness.html">丼飯 & 日式料理</a>
+            <a href="noodles.html">鍋燒意麵</a>
+            <a href="beef_soup.html">牛肉湯專區</a>
+            <a href="midnight.html">宵夜店</a>
+          </div>
+        </div>
+        <a href="spin.html" class="active">美食拉霸機</a>
+        <a href="diet.html">贖罪計算機</a>
+        <a href="ai_agent.html">AI Agent</a>
+      </nav>
+    </div>
+  </header>
+  <div class="header-spacer"></div>
+
+  <main class="content spin-page">
+    <h2 class="fixed-title">今天吃什麼？</h2>
+
+    <section class="block">
+      <p style="margin-left: auto; margin-right: auto;">選擇障礙又發作了嗎？把想吃的菜單輸入進去，讓命運之神來幫你決定！</p>
+      
+      <div class="slot-machine-container">
+          <div class="slot-window">
+            <span id="result-text">Ready?</span>
+          </div>
+
+          <button id="spin-btn" class="action-btn" onclick="startSpin()">🍜 抽一個！</button>
+
+          <div class="list-settings">
+            <div class="add-form">
+              <strong>新增餐廳</strong>
+              <input type="text" id="new-name" placeholder="輸入餐廳名稱">
+              <button type="button" id="add-btn">加入名單</button>
+            </div>
+
+            <table class="options-table" id="food-table" aria-label="目前抽籤選項列表">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>名稱</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="2">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+      </div>
+    </section>
+
+    <section class="block">
+        <h3>規則說明</h3>
+        <p>1. 點擊「加入名單」輸入你想吃的餐廳，也可使用預設名單。<br>
+           2. 按下紅色按鈕，等待命運的結果。<br>
+           3. 如果結果不滿意... 那就再按一次，直到滿意為止！</p>
+    </section>
+  </main>
+
+</body>
+</html>

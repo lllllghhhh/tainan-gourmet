@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>台南美食 AI Agent</title>
+
+  <!-- 共用樣式 -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    .agent-box {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+    }
+    .agent-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+    }
+    button {
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #f7f7f7;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    select, input {
+      padding: 8px;
+      min-width: 180px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="header-spacer"></div>
+    <div class="header-inner">
+      <div class="brand">
+        <img src="image/IIM_logo.png" class="logo-img" alt="IIM好食在 Logo">
+      </div>
+      <nav class="main-nav" aria-label="主選單">
+        <a href="index.html">首頁</a>
+
+        <div class="dropdown">
+          <button class="dropbtn" type="button">食物種類 ▼</button>
+          <div class="dropdown-content">
+            <a href="tainan.html">台南特色美食</a>
+            <a href="ramen.html">拉麵</a>
+            <a href="japaness.html">丼飯 & 日式料理</a>
+            <a href="noodles.html">鍋燒意麵</a>
+            <a href="beef_soup.html">牛肉湯專區</a>
+            <a href="midnight.html">宵夜店</a>
+          </div>
+        </div>
+
+        <a href="spin.html">美食拉霸機</a>
+        <a href="diet.html">罪惡計算機</a>
+        <a href="ai_agent.html" class="active">AI Agent</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="header-spacer"></div>
+
+  <!-- ===== 主內容 ===== -->
+  <main class="content">
+    <h2>🍜 台南美食推薦 AI Agent</h2>
+    <p>
+      依照地區、時段與預算，推薦適合你的台南美食。
+      （本頁只呼叫本機 proxy：<code>http://127.0.0.1:11435</code>）
+    </p>
+
+    <div class="agent-box">
+      <div class="agent-row">
+        <label for="model">模型：</label>
+        <select id="model" aria-label="模型">
+          <option value="gpt-oss:20b">gpt-oss:20b</option>
+        </select>
+        <button id="btnModels" type="button">重新載入模型</button>
+        <span id="status"></span>
+      </div>
+
+      <h3>你的需求</h3>
+
+      <div class="agent-row">
+        <select id="area" aria-label="地區">
+          <option value="">地區（不指定）</option>
+          <option>中西區</option>
+          <option>成大周邊</option>
+          <option>安平</option>
+          <option>東區</option>
+        </select>
+
+        <select id="time" aria-label="時段">
+          <option value="">時段（不指定）</option>
+          <option>早餐</option>
+          <option>午餐</option>
+          <option>晚餐</option>
+          <option>宵夜</option>
+        </select>
+
+        <select id="budget" aria-label="預算">
+          <option value="">預算（不指定）</option>
+          <option>100 以下</option>
+          <option>100–200</option>
+          <option>200–400</option>
+          <option>400 以上</option>
+        </select>
+      </div>
+
+      <textarea id="prompt" placeholder="例如：成大附近宵夜，不要太貴"></textarea>
+
+      <div class="agent-row">
+        <button id="send" type="button">送出推薦</button>
+      </div>
+
+      <h3>AI 推薦結果</h3>
+      <pre id="out"></pre>
+    </div>
+  </main>
+
+  <script src="js/agent.js"></script>
+  <script>
+    const statusEl = document.getElementById("status");
+    const outEl = document.getElementById("out");
+
+    async function refreshModels() {
+      statusEl.textContent = "讀取中...";
+      try {
+        // 這個函式在 js/agent.js 裡
+        await agentFillModelSelect("model");
+        statusEl.textContent = "完成";
+      } catch (e) {
+        statusEl.textContent = "失敗（確認 proxy 有沒有跑）";
+        outEl.textContent = String(e);
+      }
+    }
+
+    document.getElementById("btnModels").onclick = refreshModels;
+
+    document.getElementById("send").onclick = async () => {
+      const model = document.getElementById("model").value;
+      const area = document.getElementById("area").value;
+      const time = document.getElementById("time").value;
+      const budget = document.getElementById("budget").value;
+      const text = document.getElementById("prompt").value.trim();
+      if (!text) return;
+
+      const finalPrompt =
+        `請推薦台南美食（繁體中文）。\n` +
+        `輸出規格：\n` +
+        `- 推薦 3-5 間店\n` +
+        `- 每間：店名 / 類型 / 大概價位 / 推薦原因 / 適合時段 / 大概區域\n` +
+        `- 若資訊不足，先問我 1-2 個關鍵問題再推薦\n\n` +
+        `條件：\n` +
+        (area ? `- 地區：${area}\n` : "") +
+        (time ? `- 時段：${time}\n` : "") +
+        (budget ? `- 預算：${budget}\n` : "") +
+        `- 需求：${text}\n`;
+
+      statusEl.textContent = "請求中...";
+      outEl.textContent = "";
+
+      try {
+        const data = await agentSend(finalPrompt, model);
+        outEl.textContent = data.message?.content ?? JSON.stringify(data, null, 2);
+        statusEl.textContent = "完成";
+      } catch (e) {
+        statusEl.textContent = "失敗（確認 proxy 有沒有跑）";
+        outEl.textContent = String(e);
+      }
+    };
+
+    // 進頁面自動載入模型
+    refreshModels();
+  </script>
+</body>
+</html>
