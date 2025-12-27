@@ -92,12 +92,14 @@
     <p class="hint">
       請直接描述你想吃的內容（地點、時段、價格、種類都可自由描述）。
       AI 會推薦適合的台南美食並附上「可實際前往的地址資訊」。
+      <br>
+      注意：若無法確認門牌，AI 會只提供到路名/商圈/地標，並給你 Google Maps 搜尋關鍵字。
     </p>
 
     <div class="agent-box">
       <div class="agent-row">
         <label for="model">模型：</label>
-        <select id="model">
+        <select id="model" aria-label="模型">
           <option value="gpt-oss:20b">gpt-oss:20b</option>
         </select>
         <span id="status"></span>
@@ -106,8 +108,7 @@
       <h3>你的需求</h3>
       <textarea
         id="prompt"
-        placeholder="例如：成大附近宵夜，預算 150 左右，想吃牛肉湯或鍋燒意麵">
-      </textarea>
+        placeholder="例如：成大附近宵夜，預算 150 左右，想吃牛肉湯或鍋燒意麵"></textarea>
 
       <div class="agent-row">
         <button id="send" type="button">送出推薦</button>
@@ -118,7 +119,9 @@
     </div>
   </main>
 
+  <!-- 共用代理呼叫 -->
   <script src="js/agent.js"></script>
+
   <script>
     const statusEl = document.getElementById("status");
     const sendBtn = document.getElementById("send");
@@ -133,6 +136,7 @@
         const data = await agentListModels();
         const names = (data.models || []).map(m => m.name).filter(Boolean);
 
+        // 沒抓到就保留預設
         if (!names.length) {
           statusEl.textContent = "（使用預設模型）";
           return;
@@ -146,10 +150,7 @@
           modelSel.appendChild(opt);
         }
 
-        modelSel.value = names.includes("gpt-oss:20b")
-          ? "gpt-oss:20b"
-          : names[0];
-
+        modelSel.value = names.includes("gpt-oss:20b") ? "gpt-oss:20b" : names[0];
         statusEl.textContent = "完成";
       } catch {
         statusEl.textContent = "（模型載入失敗，使用預設模型）";
@@ -163,7 +164,7 @@
     }
 
     async function handleSend() {
-      if (isSending) return;
+      if (isSending) return; // 防止重複送出
 
       const text = promptEl.value.trim();
       if (!text) return;
@@ -172,12 +173,18 @@
 
       const finalPrompt =
         `你是「台南美食推薦」AI Agent，請一律使用繁體中文回答。\n\n` +
-        `請依照以下格式輸出：\n` +
-        `- 推薦 3–5 間台南店家\n` +
-        `- 每間請包含：\n` +
-        `  店名 / 類型 / 大概價位 / 推薦原因 / 適合時段 / 大概區域 / 地址\n` +
-        `- 地址請提供到「路名或商圈」，若不確定請明確說明，不可捏造門牌\n\n` +
-        `若資訊不足，請先詢問 1–2 個關鍵問題再推薦。\n\n` +
+        `請輸出 3–5 間推薦，並使用固定格式（每間一段）：\n` +
+        `【店名】\n` +
+        `【類型】\n` +
+        `【大概價位】\n` +
+        `【推薦原因】\n` +
+        `【適合時段】\n` +
+        `【大概區域】(例如：成大周邊/中西區/安平/東區/某商圈)\n` +
+        `【地址】\n` +
+        `- 若能確定門牌才寫門牌\n` +
+        `- 若不確定門牌：只寫到路名/商圈/地標，並標註「門牌不確定」\n` +
+        `【Google Maps 搜尋】請給一個可直接搜尋的關鍵字（例如：店名 台南 中西區）\n\n` +
+        `若資訊不足，先詢問 1–2 個關鍵問題再推薦。\n\n` +
         `使用者需求：${text}\n`;
 
       statusEl.textContent = "請求中...";
@@ -190,15 +197,17 @@
           data.message?.content ?? JSON.stringify(data, null, 2);
         statusEl.textContent = "完成";
       } catch (e) {
-        statusEl.textContent = "失敗（請確認 proxy 有啟動）";
+        statusEl.textContent = "失敗（請確認 server.py/proxy 是否有啟動）";
         document.getElementById("out").textContent = String(e);
       } finally {
         setSendingState(false);
       }
     }
 
+    // 按鈕送出（會鎖住避免連點）
     sendBtn.addEventListener("click", handleSend);
 
+    // Enter = 送出；Shift+Enter = 換行
     promptEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -206,6 +215,7 @@
       }
     });
 
+    // 進頁面自動載入模型
     loadModelsIntoSelect();
   </script>
 </body>
