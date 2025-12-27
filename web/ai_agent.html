@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>台南美食 AI Agent</title>
 
+  <!-- 共用樣式 -->
   <link rel="stylesheet" href="css/style.css">
 
   <style>
@@ -23,7 +24,7 @@
     }
     textarea {
       width: 100%;
-      height: 160px;
+      height: 140px;
       padding: 10px;
     }
     button {
@@ -35,16 +36,21 @@
       background: #f7f7f7;
       padding: 12px;
       border-radius: 8px;
-      margin: 0;
     }
     select, input {
       padding: 8px;
-      min-width: 200px;
+      min-width: 220px;
+    }
+    .hint {
+      color: #666;
+      font-size: 14px;
+      margin: 6px 0 14px;
     }
   </style>
 </head>
 
 <body>
+  <!-- ===== Header（沿用你原本網站） ===== -->
   <header class="site-header">
     <div class="header-spacer"></div>
     <div class="header-inner">
@@ -76,11 +82,11 @@
 
   <div class="header-spacer"></div>
 
+  <!-- ===== 主內容 ===== -->
   <main class="content">
     <h2>🍜 台南美食推薦 AI Agent</h2>
-    <p>
-      直接描述你的需求（例如：人數、口味、是否排隊、地點、預算、時段）。
-      <br>（本頁透過後端 <code>/proxy</code> 呼叫上游，不會把 API Key 暴露在前端）
+    <p class="hint">
+      本頁會自動載入可用模型並提供下拉選單；送出後會透過 <code>/proxy</code> 呼叫你的模型服務。
     </p>
 
     <div class="agent-box">
@@ -89,13 +95,11 @@
         <select id="model" aria-label="模型">
           <option value="gpt-oss:20b">gpt-oss:20b</option>
         </select>
-
-        <button id="btnModels" type="button">重新載入模型</button>
         <span id="status"></span>
       </div>
 
       <h3>你的需求</h3>
-      <textarea id="prompt" placeholder="例如：成大附近兩個人，想吃宵夜，不要太油，預算 200 內，不想排隊"></textarea>
+      <textarea id="prompt" placeholder="例如：成大附近的宵夜，不要太貴、想吃牛肉湯或鍋燒意麵"></textarea>
 
       <div class="agent-row">
         <button id="send" type="button">送出推薦</button>
@@ -112,11 +116,17 @@
 
     async function loadModelsIntoSelect() {
       const modelSel = document.getElementById("model");
-      statusEl.textContent = "讀取中...";
+      statusEl.textContent = "載入模型中...";
 
       try {
         const data = await agentListModels();
         const names = (data.models || []).map(m => m.name).filter(Boolean);
+
+        // 沒抓到就保留預設
+        if (!names.length) {
+          statusEl.textContent = "（未取得模型清單，使用預設模型）";
+          return;
+        }
 
         modelSel.innerHTML = "";
         for (const name of names) {
@@ -127,16 +137,13 @@
         }
 
         const preferred = "gpt-oss:20b";
-        if (names.includes(preferred)) modelSel.value = preferred;
-        else if (names.length) modelSel.value = names[0];
+        modelSel.value = names.includes(preferred) ? preferred : names[0];
 
         statusEl.textContent = "完成";
       } catch (e) {
-        statusEl.textContent = "失敗（確認 server/proxy 是否啟動）";
+        statusEl.textContent = "（模型載入失敗，使用預設模型）";
       }
     }
-
-    document.getElementById("btnModels").onclick = loadModelsIntoSelect;
 
     document.getElementById("send").onclick = async () => {
       const model = document.getElementById("model").value;
@@ -144,11 +151,11 @@
       if (!text) return;
 
       const finalPrompt =
-        "你是「台南美食推薦」AI，請用繁體中文回答。\n" +
-        "請輸出：\n" +
-        "1) 推薦 3–5 間店（每間：店名 / 類型 / 大概價位 / 推薦原因 / 適合時段 / 大概區域）\n" +
-        "2) 若資訊不足，先問我 1–2 個關鍵問題再推薦。\n\n" +
-        "我的需求如下：\n" + text;
+        `你是「台南美食推薦」AI，請用繁體中文回答。\n` +
+        `請輸出：\n` +
+        `1) 推薦 3-5 間店（每間：店名/類型/大概價位/推薦原因/適合時段/大概區域）\n` +
+        `2) 若資訊不足，先問我 1-2 個關鍵問題再推薦。\n\n` +
+        `使用者需求：${text}\n`;
 
       statusEl.textContent = "請求中...";
       document.getElementById("out").textContent = "";
@@ -159,12 +166,12 @@
           data.message?.content ?? JSON.stringify(data, null, 2);
         statusEl.textContent = "完成";
       } catch (e) {
-        statusEl.textContent = "失敗（確認 server/proxy 是否啟動）";
+        statusEl.textContent = "失敗（確認 server.py/proxy 是否有跑）";
         document.getElementById("out").textContent = String(e);
       }
     };
 
-    // 進頁面自動載入模型
+    // 進頁面自動載入模型（不需要按按鈕）
     loadModelsIntoSelect();
   </script>
 </body>
