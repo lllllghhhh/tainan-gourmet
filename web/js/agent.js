@@ -1,31 +1,33 @@
-﻿// web/js/agent.js (整份取代原檔)
+﻿// js/agent.js
+const AGENT_BASE = "http://127.0.0.1:11435";
 
-// ✅ 走你的 server.py 反向代理路徑（同源，避免 CORS）
-const AGENT_BASE = ""; // same-origin
-const DEFAULT_MODEL = "gpt-oss:20b";
-
-// 你的 server.py 是 /proxy/{path}
-// 所以 tags 要打 /proxy/api/tags
 async function agentListModels() {
-  const r = await fetch(`${AGENT_BASE}/proxy/api/tags`, { method: "GET" });
+  const r = await fetch(`${AGENT_BASE}/api/tags`);
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
 
-async function agentSend(userText, model = DEFAULT_MODEL) {
+async function agentSend(userText, model) {
   const payload = {
     model,
     stream: false,
     messages: [
-      { role: "system", content: "You are a helpful AI agent." },
-      { role: "user", content: userText }
+      {
+        role: "system",
+        content:
+          "你是專門推薦台南美食的 AI Agent，請避免捏造地址，若不確定請誠實說明。"
+      },
+      {
+        role: "user",
+        content: userText
+      }
     ]
   };
 
-  const r = await fetch(`${AGENT_BASE}/proxy/api/chat`, {
+  const r = await fetch(`${AGENT_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
 
   if (!r.ok) throw new Error(await r.text());
