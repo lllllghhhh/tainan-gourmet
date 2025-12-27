@@ -31,6 +31,10 @@
       padding: 10px 16px;
       cursor: pointer;
     }
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     pre {
       white-space: pre-wrap;
       background: #f7f7f7;
@@ -113,6 +117,10 @@
   <script src="js/agent.js"></script>
   <script>
     const statusEl = document.getElementById("status");
+    const sendBtn = document.getElementById("send");
+    const promptEl = document.getElementById("prompt");
+
+    let isSending = false;
 
     async function loadModelsIntoSelect() {
       const modelSel = document.getElementById("model");
@@ -122,7 +130,6 @@
         const data = await agentListModels();
         const names = (data.models || []).map(m => m.name).filter(Boolean);
 
-        // 沒抓到就保留預設
         if (!names.length) {
           statusEl.textContent = "（未取得模型清單，使用預設模型）";
           return;
@@ -145,9 +152,21 @@
       }
     }
 
-    document.getElementById("send").onclick = async () => {
+    function setSendingState(sending) {
+      isSending = sending;
+      sendBtn.disabled = sending;
+      if (sending) {
+        sendBtn.textContent = "送出中...";
+      } else {
+        sendBtn.textContent = "送出推薦";
+      }
+    }
+
+    async function handleSend() {
+      if (isSending) return; // ✅ 防止重複送出
+
       const model = document.getElementById("model").value;
-      const text = document.getElementById("prompt").value.trim();
+      const text = promptEl.value.trim();
       if (!text) return;
 
       const finalPrompt =
@@ -160,6 +179,7 @@
       statusEl.textContent = "請求中...";
       document.getElementById("out").textContent = "";
 
+      setSendingState(true);
       try {
         const data = await agentSend(finalPrompt, model);
         document.getElementById("out").textContent =
@@ -168,10 +188,23 @@
       } catch (e) {
         statusEl.textContent = "失敗（確認 server.py/proxy 是否有跑）";
         document.getElementById("out").textContent = String(e);
+      } finally {
+        setSendingState(false);
       }
-    };
+    }
 
-    // 進頁面自動載入模型（不需要按按鈕）
+    // ✅ 按鈕送出（會鎖住避免連點）
+    sendBtn.addEventListener("click", handleSend);
+
+    // ✅ 防止 Enter 連按造成連續送出：Enter = 送出；Shift+Enter = 換行
+    promptEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    // 進頁面自動載入模型
     loadModelsIntoSelect();
   </script>
 </body>
