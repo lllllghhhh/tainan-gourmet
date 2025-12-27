@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>台南美食 AI Agent</title>
 
-  <!-- 共用樣式 -->
   <link rel="stylesheet" href="css/style.css">
 
   <style>
@@ -24,7 +23,7 @@
     }
     textarea {
       width: 100%;
-      height: 120px;
+      height: 160px;
       padding: 10px;
     }
     button {
@@ -36,22 +35,23 @@
       background: #f7f7f7;
       padding: 12px;
       border-radius: 8px;
+      margin: 0;
     }
     select, input {
       padding: 8px;
-      min-width: 180px;
+      min-width: 200px;
     }
   </style>
 </head>
 
 <body>
-  <!-- ===== Header ===== -->
   <header class="site-header">
     <div class="header-spacer"></div>
     <div class="header-inner">
       <div class="brand">
         <img src="image/IIM_logo.png" class="logo-img" alt="IIM好食在 Logo">
       </div>
+
       <nav class="main-nav" aria-label="主選單">
         <a href="index.html">首頁</a>
 
@@ -76,12 +76,11 @@
 
   <div class="header-spacer"></div>
 
-  <!-- ===== 主內容 ===== -->
   <main class="content">
     <h2>🍜 台南美食推薦 AI Agent</h2>
     <p>
-      依照地區、時段與預算，推薦適合你的台南美食。
-      （本頁只呼叫本機 proxy：<code>http://127.0.0.1:11435</code>）
+      直接描述你的需求（例如：人數、口味、是否排隊、地點、預算、時段）。
+      <br>（本頁透過後端 <code>/proxy</code> 呼叫上游，不會把 API Key 暴露在前端）
     </p>
 
     <div class="agent-box">
@@ -90,39 +89,13 @@
         <select id="model" aria-label="模型">
           <option value="gpt-oss:20b">gpt-oss:20b</option>
         </select>
+
         <button id="btnModels" type="button">重新載入模型</button>
         <span id="status"></span>
       </div>
 
       <h3>你的需求</h3>
-
-      <div class="agent-row">
-        <select id="area" aria-label="地區">
-          <option value="">地區（不指定）</option>
-          <option>中西區</option>
-          <option>成大周邊</option>
-          <option>安平</option>
-          <option>東區</option>
-        </select>
-
-        <select id="time" aria-label="時段">
-          <option value="">時段（不指定）</option>
-          <option>早餐</option>
-          <option>午餐</option>
-          <option>晚餐</option>
-          <option>宵夜</option>
-        </select>
-
-        <select id="budget" aria-label="預算">
-          <option value="">預算（不指定）</option>
-          <option>100 以下</option>
-          <option>100–200</option>
-          <option>200–400</option>
-          <option>400 以上</option>
-        </select>
-      </div>
-
-      <textarea id="prompt" placeholder="例如：成大附近宵夜，不要太貴"></textarea>
+      <textarea id="prompt" placeholder="例如：成大附近兩個人，想吃宵夜，不要太油，預算 200 內，不想排隊"></textarea>
 
       <div class="agent-row">
         <button id="send" type="button">送出推薦</button>
@@ -133,60 +106,66 @@
     </div>
   </main>
 
-  <script src="/js/agent.js"></script>
+  <script src="js/agent.js"></script>
   <script>
     const statusEl = document.getElementById("status");
-    const outEl = document.getElementById("out");
 
-    async function refreshModels() {
+    async function loadModelsIntoSelect() {
+      const modelSel = document.getElementById("model");
       statusEl.textContent = "讀取中...";
+
       try {
-        // 這個函式在 js/agent.js 裡
-        await agentFillModelSelect("model");
+        const data = await agentListModels();
+        const names = (data.models || []).map(m => m.name).filter(Boolean);
+
+        modelSel.innerHTML = "";
+        for (const name of names) {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          modelSel.appendChild(opt);
+        }
+
+        const preferred = "gpt-oss:20b";
+        if (names.includes(preferred)) modelSel.value = preferred;
+        else if (names.length) modelSel.value = names[0];
+
         statusEl.textContent = "完成";
       } catch (e) {
-        statusEl.textContent = "失敗（確認 proxy 有沒有跑）";
-        outEl.textContent = String(e);
+        statusEl.textContent = "失敗（確認 server/proxy 是否啟動）";
       }
     }
 
-    document.getElementById("btnModels").onclick = refreshModels;
+    document.getElementById("btnModels").onclick = loadModelsIntoSelect;
 
     document.getElementById("send").onclick = async () => {
       const model = document.getElementById("model").value;
-      const area = document.getElementById("area").value;
-      const time = document.getElementById("time").value;
-      const budget = document.getElementById("budget").value;
       const text = document.getElementById("prompt").value.trim();
       if (!text) return;
 
       const finalPrompt =
-        `請推薦台南美食（繁體中文）。\n` +
-        `輸出規格：\n` +
-        `- 推薦 3-5 間店\n` +
-        `- 每間：店名 / 類型 / 大概價位 / 推薦原因 / 適合時段 / 大概區域\n` +
-        `- 若資訊不足，先問我 1-2 個關鍵問題再推薦\n\n` +
-        `條件：\n` +
-        (area ? `- 地區：${area}\n` : "") +
-        (time ? `- 時段：${time}\n` : "") +
-        (budget ? `- 預算：${budget}\n` : "") +
-        `- 需求：${text}\n`;
+        "你是「台南美食推薦」AI，請用繁體中文回答。\n" +
+        "請輸出：\n" +
+        "1) 推薦 3–5 間店（每間：店名 / 類型 / 大概價位 / 推薦原因 / 適合時段 / 大概區域）\n" +
+        "2) 若資訊不足，先問我 1–2 個關鍵問題再推薦。\n\n" +
+        "我的需求如下：\n" + text;
 
       statusEl.textContent = "請求中...";
-      outEl.textContent = "";
+      document.getElementById("out").textContent = "";
 
       try {
         const data = await agentSend(finalPrompt, model);
-        outEl.textContent = data.message?.content ?? JSON.stringify(data, null, 2);
+        document.getElementById("out").textContent =
+          data.message?.content ?? JSON.stringify(data, null, 2);
         statusEl.textContent = "完成";
       } catch (e) {
-        statusEl.textContent = "失敗（確認 proxy 有沒有跑）";
-        outEl.textContent = String(e);
+        statusEl.textContent = "失敗（確認 server/proxy 是否啟動）";
+        document.getElementById("out").textContent = String(e);
       }
     };
 
     // 進頁面自動載入模型
-    refreshModels();
+    loadModelsIntoSelect();
   </script>
 </body>
 </html>
